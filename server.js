@@ -2,63 +2,69 @@ import express from "express";
 import bodyParser from "body-parser";
 import pkg from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const { Client, LocalAuth } = pkg;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
+// Inisialisasi client WhatsApp
 const client = new Client({
-  authStrategy: new LocalAuth(),
-  puppeteer: {
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-    ],
-  },
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: false, // agar bisa lihat QR
+        args: [
+            "--disable-dev-shm-usage",
+            "--disable-accelerated-2d-canvas"
+        ],
+    },
 });
 
+// Event QR code
 client.on("qr", (qr) => {
-  console.log("📱 Scan QR ini untuk login WhatsApp:");
-  qrcode.generate(qr, { small: true });
+    console.log("📱 Scan QR ini untuk login WhatsApp:");
+    qrcode.generate(qr, { small: true });
 });
 
+// Event siap
 client.on("ready", () => {
-  console.log("✅ WhatsApp siap digunakan!");
+    console.log("✅ WhatsApp siap digunakan!");
 });
 
+// Event error login
+client.on("auth_failure", (msg) => {
+    console.error("❌ Gagal login:", msg);
+});
+
+// Event disconnect
+client.on("disconnected", (reason) => {
+    console.log("⚠️ WhatsApp terputus:", reason);
+    client.initialize(); // auto reconnect
+});
+
+// Mulai client
 client.initialize();
 
 // Endpoint kirim pesan
 app.post("/send", async (req, res) => {
-  const { number, message } = req.body;
+    const { number, message } = req.body;
 
-  if (!number || !message)
-    return res.status(400).send({ success: false, error: "Nomor dan pesan wajib diisi" });
+    if (!number || !message) {
+        return res.status(400).send({ success: false, error: "Nomor dan pesan wajib diisi" });
+    }
 
-  try {
-    const chatId = number.startsWith("62")
-      ? number + "@c.us"
-      : "62" + number.replace(/^0/, "") + "@c.us";
+    try {
+        const chatId = number.startsWith("62")
+            ? number + "@c.us"
+            : "62" + number.replace(/^0/, "") + "@c.us";
 
-    await client.sendMessage(chatId, message);
-    res.send({ success: true });
-  } catch (err) {
-    console.error("❌ Error kirim pesan:", err);
-    res.status(500).send({ success: false, error: "Gagal mengirim pesan" });
-  }
+        await client.sendMessage(chatId, message);
+        res.send({ success: true });
+    } catch (err) {
+        console.error("❌ Error kirim pesan:", err);
+        res.status(500).send({ success: false, error: "Gagal mengirim pesan" });
+    }
 });
 
 // Jalankan server
