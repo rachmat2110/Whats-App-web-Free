@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kirim WhatsApp Gratis</title>
+  <style>
+    body { font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
+    .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+    input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; }
+    .success { color: green; margin-top: 10px; }
+    .error { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>Kirim WhatsApp Gratis</h3>
+    <input id="number" type="text" placeholder="Nomor (contoh: 628123456789)" />
+    <textarea id="message" placeholder="Tulis pesan di sini..."></textarea>
+    <button onclick="sendMessage()">Kirim</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const number = document.getElementById("number").value.trim();
+      const message = document.getElementById("message").value.trim();
+      const statusDiv = document.getElementById("status");
+      statusDiv.innerHTML = "";
+
+      if (!number || !message) {
+        statusDiv.innerHTML = "<div class='error'>Nomor dan pesan harus diisi!</div>";
+        return;
+      }
+
+      try {
+        const res = await fetch("/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ number, message }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          statusDiv.innerHTML = "<div class='success'>✅ Pesan berhasil dikirim!</div>";
+        } else {
+          statusDiv.innerHTML = "<div class='error'>❌ Gagal: " + (data.error || "") + "</div>";
+        }
+      } catch (err) {
+        statusDiv.innerHTML = "<div class='error'>❌ Gagal mengirim pesan.</div>";
+      }
+    }
+  </script>
+</body>
+</html>

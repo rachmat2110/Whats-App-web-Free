@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Puppeteer local chromium
+**/.local-chromium/
+
+# WhatsApp session data
+.wwebjs_auth/
+.session/
+session.json
+
+# Env
+.env
