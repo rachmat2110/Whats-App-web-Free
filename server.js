@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import pkg from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
+import os from "os";
 
 const { Client, LocalAuth } = pkg;
 
@@ -9,15 +10,25 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
+// Deteksi platform
+const isLinux = os.platform() === "linux";
+
 // Inisialisasi client WhatsApp
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        headless: false, // agar bisa lihat QR
-        args: [
-            "--disable-dev-shm-usage",
-            "--disable-accelerated-2d-canvas"
-        ],
+        headless: isLinux, // headless di Linux/Railway, tampil di local
+        args: isLinux
+            ? [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-accelerated-2d-canvas",
+            ]
+            : [
+                "--disable-dev-shm-usage",
+                "--disable-accelerated-2d-canvas",
+            ],
     },
 });
 
